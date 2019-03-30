@@ -1,0 +1,177 @@
+---
+title: "Data Visulizations using ggplot"
+output: html_document
+---
+
+```{r ,message=FALSE,warning=FALSE}
+#Loading Packages
+library(tidyverse)
+```
+
+
+#A)Basic Visulizations
+
+##Note-To build a ggplot, we will use the following basic template that can be used for different types of plots:
+
+```{r}
+#ggplot(data = <DATA>, mapping = aes(<MAPPINGS>)) +  <GEOM_FUNCTION>()
+
+```
+
+##Use the ggplot() function and bind the plot to a specific data frame using the data argument
+
+```{r}
+#ggplot(data = surveys_complete)
+```
+
+###Note-define a mapping (using the aesthetic (aes) function), by selecting the variables to be plotted and specifying how to present them in the graph, e.g. as x/y positions or characteristics such as size, shape, color, etc.
+
+```{r}
+#ggplot(data = mtcars, mapping = aes(x = mpg, y = cyl))
+```
+
+###add 'geoms' - graphical representations of the data in the plot (points, lines, bars). ggplot2 offers many different geoms; we will use some common ones today, including:
+
+###* `geom_point()` for scatter plots, dot plots, etc.
+###* `geom_boxplot()` for, well, boxplots!
+###* `geom_line()` for trend lines, time series, etc.  
+
+###To add a geom to the plot use the + operator. Because we have two continuous variables, let's use  geom_point() first:
+
+```{r}
+#Scatter Plot
+ggplot(data = airquality, mapping = aes(x = airquality$Day, y =Temp )) +
+  geom_point()
+```
+
+##Assign a plot to a variable
+```{r}
+# Assign plot to a variable
+aq_plot <- ggplot(data = airquality, mapping = aes(x = airquality$Day, y =Temp )) +
+  geom_point()
+
+# Draw the plot
+aq_plot + 
+    geom_point()
+```
+
+#Line Graph
+
+```{r,,warning=FALSE}
+ggplot(data = airquality, mapping = aes(x =airquality$Ozone, y =airquality$Temp )) +
+  geom_line()
+```
+
+#Boxplot
+
+```{r,warning=FALSE}
+
+ggplot(data = airquality, mapping = aes(x =airquality$Ozone, y =airquality$Temp )) +
+  geom_boxplot()
+
+```
+
+#Adding Labels and Titles
+```{r,warning=FALSE}
+ggplot(data = airquality, mapping = aes(x =airquality$Ozone, y =airquality$Temp )) +
+  geom_line()+
+  xlab("Ozone")+
+  ylab("Temperature")+
+  ggtitle("Ozone vs Temp")
+
+
+```
+
+#Level 2 Visulizations
+```{r}
+library(ggplot2)
+theme_set(theme_classic())
+
+# Plot
+g <- ggplot(mpg, aes(cty))
+g + geom_density(aes(fill=factor(cyl)), alpha=0.8) + 
+    labs(title="Density plot", 
+         subtitle="City Mileage Grouped by Number of cylinders",
+         caption="Source: mpg",
+         x="City Mileage",
+         fill="# Cylinders")
+```
+
+#Violin Graphs
+```{r}
+theme_set(theme_bw())
+
+# plot
+g <- ggplot(mpg, aes(class, cty))
+g + geom_violin() + 
+  labs(title="Violin plot", 
+       subtitle="City Mileage vs Class of vehicle",
+       caption="Source: mpg",
+       x="Class of Vehicle",
+       y="City Mileage")
+```
+
+#Lollipop Charts
+
+```{r}
+#creating the dataset
+cty_mpg <- aggregate(mpg$cty, by=list(mpg$manufacturer), FUN=mean)  # aggregate
+colnames(cty_mpg) <- c("make", "mileage")  # change column names
+cty_mpg <- cty_mpg[order(cty_mpg$mileage), ]  # sort
+cty_mpg$make <- factor(cty_mpg$make, levels = cty_mpg$make)  # to retain the order in plot.
+head(cty_mpg, 4)
+
+# Plot
+ggplot(cty_mpg, aes(x=make, y=mileage)) + 
+  geom_point(size=3) + 
+  geom_segment(aes(x=make, 
+                   xend=make, 
+                   y=0, 
+                   yend=mileage)) + 
+  labs(title="Lollipop Chart", 
+       subtitle="Make Vs Avg. Mileage", 
+       caption="source: mpg") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+#Advanced Visulizations
+
+Key features of gganimate:
+
+transitions: you want your data to change
+views: you want your viewpoint to change
+shadows: you want the animation to have memory
+```{r}
+library(gganimate)
+ggplot(mtcars, aes(factor(cyl), mpg)) + 
+  geom_boxplot() + 
+  # Here comes the gganimate code
+  transition_states(
+    gear,
+    transition_length = 2,
+    state_length = 1
+  ) +
+  enter_fade() + 
+  exit_shrink() +
+  ease_aes('sine-in-out')
+```
+
+```{r}
+library(gapminder)
+
+ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop, colour = country)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~continent) +
+  # Here comes the gganimate specific bits
+  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
+  transition_time(year) +
+  ease_aes('linear')
+```
+
+#transition_time(). The transition length between the states will be set to correspond to the actual time difference between them.
+
+#facet_wrap-creating facet by countries.
+#ease_aes-smooth transition between points.
